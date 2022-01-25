@@ -33,24 +33,25 @@
 
 /* Node, List, and Iterator are the only data structures used currently. */
 
-typedef struct listNode {
+typedef struct listNode {  // 双端链表节点
     struct listNode *prev;
     struct listNode *next;
-    void *value;
+    void *value;  // 保存的值
 } listNode;
 
-typedef struct listIter {
+typedef struct listIter {  // 迭代器结构，正向和反向遍历列表
     listNode *next;
     int direction;
 } listIter;
 
-typedef struct list {
-    listNode *head;
-    listNode *tail;
-    void *(*dup)(void *ptr);
-    void (*free)(void *ptr);
-    int (*match)(void *ptr, void *key);
-    unsigned long len;
+typedef struct list {  // 链表
+    listNode *head;  // 首节点
+    listNode *tail;  // 尾节点
+    // 函数指针
+    void *(*dup)(void *ptr);  // 节点值复制
+    void (*free)(void *ptr);  // 节点值释放
+    int (*match)(void *ptr, void *key);  // 节点值对比
+    unsigned long len;  // 节点数量
 } list;
 
 /* Functions implemented as macros */
@@ -87,7 +88,7 @@ void listRewindTail(list *list, listIter *li);
 void listRotate(list *list);
 
 /* Directions for iterators */
-#define AL_START_HEAD 0
-#define AL_START_TAIL 1
+#define AL_START_HEAD 0  // 从头到尾
+#define AL_START_TAIL 1  // 从尾到头
 
 #endif /* __ADLIST_H__ */

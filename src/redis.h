@@ -79,7 +79,7 @@ typedef long long mstime_t; /* millisecond time type. */
 #define REDIS_DBCRON_DBS_PER_CALL 16
 #define REDIS_MAX_WRITE_PER_EVENT (1024*64)
 #define REDIS_SHARED_SELECT_CMDS 10
-#define REDIS_SHARED_INTEGERS 10000
+#define REDIS_SHARED_INTEGERS 10000  // redis服务器启动时候会创建10000个sds共享对象，0-9999
 #define REDIS_SHARED_BULKHDR_LEN 32
 #define REDIS_MAX_LOGMSG_LEN    1024 /* Default maximum length of syslog messages */
 #define REDIS_AOF_REWRITE_PERC  100
@@ -409,12 +409,15 @@ typedef long long mstime_t; /* millisecond time type. */
 #define REDIS_LRU_BITS 24
 #define REDIS_LRU_CLOCK_MAX ((1<<REDIS_LRU_BITS)-1) /* Max value of obj->lru */
 #define REDIS_LRU_CLOCK_RESOLUTION 1000 /* LRU clock resolution in ms */
+// redis使用对象来表示键和值，此处的对象就是redisObject，所有的键都是sds，值是sds，集合，有序集合，哈希表和列表
 typedef struct redisObject {
-    unsigned type:4;
-    unsigned encoding:4;
+    // 8字节元信息+8字节指针
+    unsigned type:4;  // 类型，bit field，占4位
+    unsigned encoding:4;  // 编码，bit field，占4位，决定5种数据类型的底层数据结构
+    // lru记录该对象最近一次被命令访问的时间，用来计算空转时间
     unsigned lru:REDIS_LRU_BITS; /* lru time (relative to server.lruclock) */
-    int refcount;
-    void *ptr;
+    int refcount;  // 引用计数
+    void *ptr;  // 指向底层对象，字符串，集合，有序集合，哈希表，链表
 } robj;
 
 /* Macro used to obtain the current LRU clock.
@@ -564,6 +567,7 @@ struct saveparam {
     int changes;
 };
 
+// redis服务区启动创建的共享对象
 struct sharedObjectsStruct {
     robj *crlf, *ok, *err, *emptybulk, *czero, *cone, *cnegone, *pong, *space,
     *colon, *nullbulk, *nullmultibulk, *queued,
@@ -580,25 +584,26 @@ struct sharedObjectsStruct {
 };
 
 /* ZSETs use a specialized version of Skiplists */
-typedef struct zskiplistNode {
-    robj *obj;
-    double score;
-    struct zskiplistNode *backward;
+typedef struct zskiplistNode {  // 跳表节点
+    robj *obj;  // redis object对象
+    double score;  // 分数，有序集合根据分数排序
+    struct zskiplistNode *backward;  // 在最底层的前一个节点
     struct zskiplistLevel {
-        struct zskiplistNode *forward;
-        unsigned int span;
-    } level[];
+        struct zskiplistNode *forward;  // 指向该层的后一个节点
+        unsigned int span;  // 该层的后一个节点与当前节点的间隔，间隔数是相对于最底层而言的
+    } level[];  // 表示该节点占据的各个层
 } zskiplistNode;
 
-typedef struct zskiplist {
-    struct zskiplistNode *header, *tail;
-    unsigned long length;
-    int level;
+typedef struct zskiplist {  // 跳表
+    struct zskiplistNode *header, *tail;  // 指向表头节点，表尾节点，表头节点是空姐点，表头结点的下一个节点才是有效节点
+    unsigned long length;  // 除去表头节点的节点个数
+    int level;  // 最大层
 } zskiplist;
 
-typedef struct zset {
-    dict *dict;
-    zskiplist *zsl;
+// 有序集合两种实现方式：跳表+压缩列表
+typedef struct zset {  // 有序集合的跳表实现
+    dict *dict;  // 字段，有两个哈希表
+    zskiplist *zsl;  // 跳表
 } zset;
 
 typedef struct clientBufferLimitsConfig {

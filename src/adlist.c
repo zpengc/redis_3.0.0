@@ -40,13 +40,13 @@
  * On error, NULL is returned. Otherwise the pointer to the new list. */
 list *listCreate(void)
 {
-    struct list *list;
+    struct list *list;  // 定义一个链表指针
 
-    if ((list = zmalloc(sizeof(*list))) == NULL)
-        return NULL;
-    list->head = list->tail = NULL;
+    if ((list = zmalloc(sizeof(*list))) == NULL)  // 申请内存，sizeof(*list)为8字节
+        return NULL;  // 分配失败
+    list->head = list->tail = NULL;  // 首节点，尾节点为空
     list->len = 0;
-    list->dup = NULL;
+    list->dup = NULL;  // 函数指针
     list->free = NULL;
     list->match = NULL;
     return list;
@@ -60,15 +60,15 @@ void listRelease(list *list)
     unsigned long len;
     listNode *current, *next;
 
-    current = list->head;
-    len = list->len;
+    current = list->head;  // 首节点开始
+    len = list->len;  // 节点长度
     while(len--) {
-        next = current->next;
-        if (list->free) list->free(current->value);
-        zfree(current);
+        next = current->next;  // 提前保存下一个节点
+        if (list->free) list->free(current->value);  // 如果定义了节点值释放函数，需要调用
+        zfree(current);  // 释放当前节点
         current = next;
     }
-    zfree(list);
+    zfree(list);  // 释放链表头
 }
 
 /* Add a new node to the list, to head, containing the specified 'value'
@@ -84,9 +84,9 @@ list *listAddNodeHead(list *list, void *value)
     if ((node = zmalloc(sizeof(*node))) == NULL)
         return NULL;
     node->value = value;
-    if (list->len == 0) {
+    if (list->len == 0) {  // 初始空链表
         list->head = list->tail = node;
-        node->prev = node->next = NULL;
+        node->prev = node->next = NULL;  // 非循环链表
     } else {
         node->prev = NULL;
         node->next = list->head;
@@ -220,13 +220,13 @@ void listRewindTail(list *list, listIter *li) {
  * */
 listNode *listNext(listIter *iter)
 {
-    listNode *current = iter->next;
+    listNode *current = iter->next;  // 当前指向节点
 
     if (current != NULL) {
-        if (iter->direction == AL_START_HEAD)
-            iter->next = current->next;
-        else
-            iter->next = current->prev;
+        if (iter->direction == AL_START_HEAD)  // 从头到尾
+            iter->next = current->next;  // 后置节点
+        else  // 从尾到头
+            iter->next = current->prev;  // 前置节点
     }
     return current;
 }
@@ -245,7 +245,7 @@ list *listDup(list *orig)
     listIter *iter;
     listNode *node;
 
-    if ((copy = listCreate()) == NULL)
+    if ((copy = listCreate()) == NULL)  // 内存分配失败
         return NULL;
     copy->dup = orig->dup;
     copy->free = orig->free;

@@ -36,21 +36,25 @@
 #include <sys/types.h>
 #include <stdarg.h>
 
-typedef char *sds;
+typedef char *sds;  // 创造别名，sds是char*的别名
 
+// sds简单动态字符串
 struct sdshdr {
-    unsigned int len;
-    unsigned int free;
-    char buf[];
+    unsigned int len;  // buf数组中已使用字节空间，也就是保存的字符串长度
+    unsigned int free;  // buf数组中空闲字节空间
+    char buf[];  // 字节数组，保存字符串+空闲空间，末尾空字符
 };
 
-static inline size_t sdslen(const sds s) {
-    struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));
+// 查看已经使用的字节数
+static inline size_t sdslen(const sds s) {  // s指向一个buf内的字符串
+    struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));  // sh指向结构体首地址
     return sh->len;
 }
 
+
+// 查看空闲的字节数
 static inline size_t sdsavail(const sds s) {
-    struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));
+    struct sdshdr *sh = (void*)(s-(sizeof(struct sdshdr)));  // sh指向结构体首地址
     return sh->free;
 }
 

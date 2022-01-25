@@ -44,39 +44,40 @@
 /* Unused arguments generate annoying warnings... */
 #define DICT_NOTUSED(V) ((void) V)
 
-typedef struct dictEntry {
-    void *key;
-    union {
-        void *val;
-        uint64_t u64;
-        int64_t s64;
-        double d;
+typedef struct dictEntry {  // 哈希表节点
+    void *key;  // 指向键，永远是sds对象
+    union {  // 指向值，可能是sds，集合，有序集合，列表，哈希表
+        void *val;  // 可能是指针
+        uint64_t u64;  // 无符号64位
+        int64_t s64;  // 有符号64位
+        double d; 
     } v;
-    struct dictEntry *next;
+    struct dictEntry *next;  // 同一个哈希桶内，指向下一个哈希表节点，拉链法
 } dictEntry;
 
-typedef struct dictType {
-    unsigned int (*hashFunction)(const void *key);
-    void *(*keyDup)(void *privdata, const void *key);
-    void *(*valDup)(void *privdata, const void *obj);
-    int (*keyCompare)(void *privdata, const void *key1, const void *key2);
-    void (*keyDestructor)(void *privdata, void *key);
-    void (*valDestructor)(void *privdata, void *obj);
+typedef struct dictType {  // 函数指针
+    unsigned int (*hashFunction)(const void *key);  // 计算哈希值
+    void *(*keyDup)(void *privdata, const void *key);  // 复制键
+    void *(*valDup)(void *privdata, const void *obj);  // 复制值
+    int (*keyCompare)(void *privdata, const void *key1, const void *key2);  // 键对比
+    void (*keyDestructor)(void *privdata, void *key);  // 销毁键
+    void (*valDestructor)(void *privdata, void *obj);  // 销毁值 
 } dictType;
 
 /* This is our hash table structure. Every dictionary has two of this as we
  * implement incremental rehashing, for the old to the new table. */
 typedef struct dictht {
-    dictEntry **table;
-    unsigned long size;
-    unsigned long sizemask;
-    unsigned long used;
+    dictEntry **table;  // 数组，元素类型是dictEntry指针
+    unsigned long size;  // 哈希桶个数
+    unsigned long sizemask;  // 计算索引值，永远是size-1，当size是2的幂时候，索引值 % size = 索引值 & （size-1）
+    unsigned long used;  // 目前已经存放的键值对数，拉链法解决哈希冲突
 } dictht;
 
-typedef struct dict {
-    dictType *type;
-    void *privdata;
-    dictht ht[2];
+typedef struct dict {  // 字典
+    dictType *type;  // 类型特定函数
+    void *privdata;  // 传递给类型特定函数的参数
+    dictht ht[2];  // 渐进式哈希，两个哈希表，每个哈希表长度是2的幂
+    // rehash索引，记录rehash的进度，redis是每执行一次写命令，就执行一次rehash，这样将成本均摊到多次写命令上
     long rehashidx; /* rehashing not in progress if rehashidx == -1 */
     int iterators; /* number of iterators currently running */
 } dict;

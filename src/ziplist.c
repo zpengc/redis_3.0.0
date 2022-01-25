@@ -154,11 +154,11 @@
         ZIPLIST_LENGTH(zl) = intrev16ifbe(intrev16ifbe(ZIPLIST_LENGTH(zl))+incr); \
 }
 
-typedef struct zlentry {
-    unsigned int prevrawlensize, prevrawlen;
-    unsigned int lensize, len;
-    unsigned int headersize;
-    unsigned char encoding;
+typedef struct zlentry { // 压缩列表节点
+    unsigned int prevrawlensize, prevrawlen;  // 编码前驱节点长度所需字节数，前驱节点长度
+    unsigned int lensize, len;  // 编码节点值长度所需字节数，节点值长度
+    unsigned int headersize;  // prevrawlensize + lensize
+    unsigned char encoding;  // 编码，表示数据类型和长度
     unsigned char *p;
 } zlentry;
 
