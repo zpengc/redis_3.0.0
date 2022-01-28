@@ -771,13 +771,13 @@ int rdbSaveBackground(char *filename) {
     server.lastbgsave_try = time(NULL);
 
     start = ustime();
-    if ((childpid = fork()) == 0) {
+    if ((childpid = fork()) == 0) {  // 子进程
         int retval;
 
         /* Child */
         closeListeningSockets(0);
         redisSetProcTitle("redis-rdb-bgsave");
-        retval = rdbSave(filename);
+        retval = rdbSave(filename);   // rdb备份
         if (retval == REDIS_OK) {
             size_t private_dirty = zmalloc_get_private_dirty();
 
@@ -787,8 +787,8 @@ int rdbSaveBackground(char *filename) {
                     private_dirty/(1024*1024));
             }
         }
-        exitFromChild((retval == REDIS_OK) ? 0 : 1);
-    } else {
+        exitFromChild((retval == REDIS_OK) ? 0 : 1);  // 0表示成功，1表示失败
+    } else {  // 父进程
         /* Parent */
         server.stat_fork_time = ustime()-start;
         server.stat_fork_rate = (double) zmalloc_used_memory() * 1000000 / server.stat_fork_time / (1024*1024*1024); /* GB per second. */
@@ -1126,12 +1126,12 @@ void rdbLoadProgressCallback(rio *r, const void *buf, size_t len) {
     }
 }
 
-int rdbLoad(char *filename) {
+int rdbLoad(char *filename) {  // 载入RDB文件
     uint32_t dbid;
     int type, rdbver;
-    redisDb *db = server.db+0;
+    redisDb *db = server.db+0;  // 默认0号数据库
     char buf[1024];
-    long long expiretime, now = mstime();
+    long long expiretime, now = mstime();  // 淘汰过期键值对
     FILE *fp;
     rio rdb;
 

@@ -45,10 +45,11 @@ list *listCreate(void)
     if ((list = zmalloc(sizeof(*list))) == NULL)  // 申请内存，sizeof(*list)为8字节
         return NULL;  // 分配失败
     list->head = list->tail = NULL;  // 首节点，尾节点为空
-    list->len = 0;
-    list->dup = NULL;  // 函数指针
-    list->free = NULL;
-    list->match = NULL;
+    list->len = 0;  // 初始没空
+    // 函数指针
+    list->dup = NULL;  // 节点值赋值
+    list->free = NULL;  // 节点值释放
+    list->match = NULL;  // 节点值匹配
     return list;
 }
 

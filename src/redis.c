@@ -120,7 +120,7 @@ struct redisServer server; /* server global state */
  *    Note that commands that may trigger a DEL as a side effect (like SET)
  *    are not fast commands.
  */
-struct redisCommand redisCommandTable[] = {
+struct redisCommand redisCommandTable[] = {  // 命令表
     {"get",getCommand,2,"rF",0,NULL,1,1,1,0,0},
     {"set",setCommand,-3,"wm",0,NULL,1,1,1,0,0},
     {"setnx",setnxCommand,3,"wmF",0,NULL,1,1,1,0,0},
@@ -397,7 +397,7 @@ long long mstime(void) {
  * exit(), because the latter may interact with the same file objects used by
  * the parent process. However if we are testing the coverage normal exit() is
  * used in order to obtain the right coverage information. */
-void exitFromChild(int retcode) {
+void exitFromChild(int retcode) {  // 0成功，1失败
 #ifdef COVERAGE_TEST
     exit(retcode);
 #else
@@ -1397,20 +1397,20 @@ void createSharedObjects(void) {
 void initServerConfig(void) {
     int j;
 
-    getRandomHexChars(server.runid,REDIS_RUN_ID_SIZE);
-    server.configfile = NULL;
-    server.hz = REDIS_DEFAULT_HZ;
-    server.runid[REDIS_RUN_ID_SIZE] = '\0';
-    server.arch_bits = (sizeof(long) == 8) ? 64 : 32;
-    server.port = REDIS_SERVERPORT;
-    server.tcp_backlog = REDIS_TCP_BACKLOG;
+    getRandomHexChars(server.runid,REDIS_RUN_ID_SIZE);  // 设置服务器运行id
+    server.configfile = NULL;  // 默认配置文件
+    server.hz = REDIS_DEFAULT_HZ;  // 默认服务器频率
+    server.runid[REDIS_RUN_ID_SIZE] = '\0';  // 为id加上null字符
+    server.arch_bits = (sizeof(long) == 8) ? 64 : 32;  // 默认服务器运行架构
+    server.port = REDIS_SERVERPORT;  // 默认端口号
+    server.tcp_backlog = REDIS_TCP_BACKLOG;  // 默认tcp队列积压请求数量
     server.bindaddr_count = 0;
     server.unixsocket = NULL;
     server.unixsocketperm = REDIS_DEFAULT_UNIX_SOCKET_PERM;
     server.ipfd_count = 0;
     server.sofd = -1;
-    server.dbnum = REDIS_DEFAULT_DBNUM;
-    server.verbosity = REDIS_DEFAULT_VERBOSITY;
+    server.dbnum = REDIS_DEFAULT_DBNUM;  // 默认16个数据库
+    server.verbosity = REDIS_DEFAULT_VERBOSITY;  // 日志级别
     server.maxidletime = REDIS_MAXIDLETIME;
     server.tcpkeepalive = REDIS_DEFAULT_TCP_KEEPALIVE;
     server.active_expire_enabled = 1;
@@ -1423,7 +1423,7 @@ void initServerConfig(void) {
     server.syslog_facility = LOG_LOCAL0;
     server.daemonize = REDIS_DEFAULT_DAEMONIZE;
     server.aof_state = REDIS_AOF_OFF;
-    server.aof_fsync = REDIS_DEFAULT_AOF_FSYNC;
+    server.aof_fsync = REDIS_DEFAULT_AOF_FSYNC;  // 默认everysec
     server.aof_no_fsync_on_rewrite = REDIS_DEFAULT_AOF_NO_FSYNC_ON_REWRITE;
     server.aof_rewrite_perc = REDIS_AOF_REWRITE_PERC;
     server.aof_rewrite_min_size = REDIS_AOF_REWRITE_MIN_SIZE;
@@ -1742,12 +1742,12 @@ void resetServerStats(void) {
     server.stat_net_output_bytes = 0;
 }
 
-void initServer(void) {
+void initServer(void) {  // 第三个阶段，初始化服务器数据结构
     int j;
 
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
-    setupSignalHandlers();
+    setupSignalHandlers();  // 设置进程信号处理器
 
     if (server.syslog_enabled) {
         openlog(server.syslog_ident, LOG_PID | LOG_NDELAY | LOG_NOWAIT,
@@ -1756,7 +1756,7 @@ void initServer(void) {
 
     server.pid = getpid();
     server.current_client = NULL;
-    server.clients = listCreate();
+    server.clients = listCreate();  // 创建客户端链表
     server.clients_to_close = listCreate();
     server.slaves = listCreate();
     server.monitors = listCreate();
@@ -1767,7 +1767,7 @@ void initServer(void) {
     server.get_ack_from_slaves = 0;
     server.clients_paused = 0;
 
-    createSharedObjects();
+    createSharedObjects();  // 创建共享变量
     adjustOpenFilesLimit();
     server.el = aeCreateEventLoop(server.maxclients+REDIS_EVENTLOOP_FDSET_INCR);
     server.db = zmalloc(sizeof(redisDb)*server.dbnum);
@@ -3032,18 +3032,18 @@ sds genRedisInfoString(char *section) {
     return info;
 }
 
-void infoCommand(redisClient *c) {
-    char *section = c->argc == 2 ? c->argv[1]->ptr : "default";
+void infoCommand(redisClient *c) {  // info + [section]
+    char *section = c->argc == 2 ? c->argv[1]->ptr : "default";  // 没有指定section就是default
 
-    if (c->argc > 2) {
-        addReply(c,shared.syntaxerr);
+    if (c->argc > 2) {  // 参数过多
+        addReply(c,shared.syntaxerr);  // 回复ERR syntax error
         return;
     }
     sds info = genRedisInfoString(section);
     addReplySds(c,sdscatprintf(sdsempty(),"$%lu\r\n",
         (unsigned long)sdslen(info)));
     addReplySds(c,info);
-    addReply(c,shared.crlf);
+    addReply(c,shared.crlf);  // \r\n
 }
 
 void monitorCommand(redisClient *c) {
@@ -3429,16 +3429,16 @@ void usage(void) {
     exit(1);
 }
 
-void redisAsciiArt(void) {
-#include "asciilogo.h"
-    char *buf = zmalloc(1024*16);
-    char *mode;
+void redisAsciiArt(void) {  // 打印redis图标
+#include "asciilogo.h"  // 记录redis图标字符串
+    char *buf = zmalloc(1024*16);  // 存储redis logo信息
+    char *mode;  
 
-    if (server.cluster_enabled) mode = "cluster";
-    else if (server.sentinel_mode) mode = "sentinel";
-    else mode = "standalone";
+    if (server.cluster_enabled) mode = "cluster";  // 集群
+    else if (server.sentinel_mode) mode = "sentinel";  // 哨兵
+    else mode = "standalone";  // 独立模式
 
-    if (server.syslog_enabled) {
+    if (server.syslog_enabled) {  // 在屏幕上显示redis logo
         redisLog(REDIS_NOTICE,
             "Redis %s (%s/%d) %s bit, %s mode, port %d, pid %ld ready to start.",
             REDIS_VERSION,
@@ -3448,7 +3448,8 @@ void redisAsciiArt(void) {
             mode, server.port,
             (long) getpid()
         );
-    } else {
+    } else {  // 将logo信息写入缓冲区数组
+    // 缓冲区，最大写入字节数，格式化字符串，参数
         snprintf(buf,1024*16,ascii_logo,
             REDIS_VERSION,
             redisGitSHA1(),
@@ -3567,6 +3568,7 @@ void redisSetProcTitle(char *title) {
 #endif
 }
 
+// 主函数
 int main(int argc, char **argv) {
     struct timeval tv;
 
@@ -3581,7 +3583,7 @@ int main(int argc, char **argv) {
     gettimeofday(&tv,NULL);
     dictSetHashFunctionSeed(tv.tv_sec^tv.tv_usec^getpid());
     server.sentinel_mode = checkForSentinelMode(argc,argv);
-    initServerConfig();
+    initServerConfig();  // 第一个阶段，初始化服务器数据结构
 
     /* We need to init sentinel right now as parsing the configuration file
      * in sentinel mode will have the effect of populating the sentinel
@@ -3591,7 +3593,7 @@ int main(int argc, char **argv) {
         initSentinel();
     }
 
-    if (argc >= 2) {
+    if (argc >= 2) {  // 载入配置选项
         int j = 1; /* First option to parse in argv[] */
         sds options = sdsempty();
         char *configfile = NULL;
@@ -3647,10 +3649,10 @@ int main(int argc, char **argv) {
         redisLog(REDIS_WARNING, "Warning: no config file specified, using the default config. In order to specify a config file use %s /path/to/%s.conf", argv[0], server.sentinel_mode ? "sentinel" : "redis");
     }
     if (server.daemonize) daemonize();
-    initServer();
+    initServer();  // 第三个阶段，初始化服务器数据结构
     if (server.daemonize) createPidFile();
     redisSetProcTitle(argv[0]);
-    redisAsciiArt();
+    redisAsciiArt();  // 打印redis图标
 
     if (!server.sentinel_mode) {
         /* Things not needed when running in Sentinel mode. */

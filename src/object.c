@@ -304,7 +304,7 @@ void incrRefCount(robj *o) {
 void decrRefCount(robj *o) {
     if (o->refcount <= 0) redisPanic("decrRefCount against refcount <= 0");
     if (o->refcount == 1) {
-        switch(o->type) {
+        switch(o->type) {  // 5中数据类型
         case REDIS_STRING: freeStringObject(o); break;
         case REDIS_LIST: freeListObject(o); break;
         case REDIS_SET: freeSetObject(o); break;

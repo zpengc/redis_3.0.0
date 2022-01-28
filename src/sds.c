@@ -53,16 +53,16 @@ sds sdsnewlen(const void *init, size_t initlen) {
 
     if (init) {
         sh = zmalloc(sizeof(struct sdshdr)+initlen+1);
-    } else {
+    } else {  
         sh = zcalloc(sizeof(struct sdshdr)+initlen+1);
     }
-    if (sh == NULL) return NULL;
-    sh->len = initlen;
-    sh->free = 0;
+    if (sh == NULL) return NULL;  // 分配内存失败
+    sh->len = initlen;  // 已使用字节空间
+    sh->free = 0;  // 空闲字节空间
     if (initlen && init)
         memcpy(sh->buf, init, initlen);
     sh->buf[initlen] = '\0';
-    return (char*)sh->buf;
+    return (char*)sh->buf;  // 返回指向sds底部字符数组的指针
 }
 
 /* Create an empty (zero length) sds string. Even in this case the string

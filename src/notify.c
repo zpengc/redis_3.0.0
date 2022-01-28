@@ -99,32 +99,32 @@ void notifyKeyspaceEvent(int type, char *event, robj *key, int dbid) {
     char buf[24];
 
     /* If notifications for this class of events are off, return ASAP. */
-    if (!(server.notify_keyspace_events & type)) return;
+    if (!(server.notify_keyspace_events & type)) return;  // 不是服务器允许的类型
 
     eventobj = createStringObject(event,strlen(event));
 
     /* __keyspace@<db>__:<key> <event> notifications. */
-    if (server.notify_keyspace_events & REDIS_NOTIFY_KEYSPACE) {
-        chan = sdsnewlen("__keyspace@",11);
+    if (server.notify_keyspace_events & REDIS_NOTIFY_KEYSPACE) {  // K，键空间通知
+        chan = sdsnewlen("__keyspace@",11);  // 构建sds对象
         len = ll2string(buf,sizeof(buf),dbid);
         chan = sdscatlen(chan, buf, len);
         chan = sdscatlen(chan, "__:", 3);
-        chan = sdscatsds(chan, key->ptr);
+        chan = sdscatsds(chan, key->ptr);  // 构建频道名称
         chanobj = createObject(REDIS_STRING, chan);
-        pubsubPublishMessage(chanobj, eventobj);
-        decrRefCount(chanobj);
+        pubsubPublishMessage(chanobj, eventobj);  // 复制对象内容
+        decrRefCount(chanobj);  // 如果引用计数为1，则释放内存，否则引用计数-1
     }
 
     /* __keyevente@<db>__:<event> <key> notifications. */
-    if (server.notify_keyspace_events & REDIS_NOTIFY_KEYEVENT) {
-        chan = sdsnewlen("__keyevent@",11);
+    if (server.notify_keyspace_events & REDIS_NOTIFY_KEYEVENT) {  // E，键事件通知
+        chan = sdsnewlen("__keyevent@",11);  // 构建sds对象
         if (len == -1) len = ll2string(buf,sizeof(buf),dbid);
         chan = sdscatlen(chan, buf, len);
         chan = sdscatlen(chan, "__:", 3);
-        chan = sdscatsds(chan, eventobj->ptr);
+        chan = sdscatsds(chan, eventobj->ptr);  // 构建频道名称
         chanobj = createObject(REDIS_STRING, chan);
         pubsubPublishMessage(chanobj, key);
-        decrRefCount(chanobj);
+        decrRefCount(chanobj);  // 如果引用计数为1，则释放内存，否则引用计数-1
     }
     decrRefCount(eventobj);
 }

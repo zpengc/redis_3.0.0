@@ -249,7 +249,7 @@ void setTypeConvert(robj *setobj, int enc) {
 
 void saddCommand(redisClient *c) {
     robj *set;
-    int j, added = 0;
+    int j, added = 0;  // add表示被添加的元素个数
 
     set = lookupKeyWrite(c->db,c->argv[1]);
     if (set == NULL) {
@@ -266,9 +266,9 @@ void saddCommand(redisClient *c) {
         c->argv[j] = tryObjectEncoding(c->argv[j]);
         if (setTypeAdd(set,c->argv[j])) added++;
     }
-    if (added) {
+    if (added) {  // 至少有一个元素被添加成功
         signalModifiedKey(c->db,c->argv[1]);
-        notifyKeyspaceEvent(REDIS_NOTIFY_SET,"sadd",c->argv[1],c->db->id);
+        notifyKeyspaceEvent(REDIS_NOTIFY_SET,"sadd",c->argv[1],c->db->id);  // 发送事件通知
     }
     server.dirty += added;
     addReplyLongLong(c,added);

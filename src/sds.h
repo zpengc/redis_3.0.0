@@ -39,7 +39,7 @@
 typedef char *sds;  // 创造别名，sds是char*的别名
 
 // sds简单动态字符串
-struct sdshdr {
+struct sdshdr {  // sizeof为8字节，空数组buf不占字节
     unsigned int len;  // buf数组中已使用字节空间，也就是保存的字符串长度
     unsigned int free;  // buf数组中空闲字节空间
     char buf[];  // 字节数组，保存字符串+空闲空间，末尾空字符

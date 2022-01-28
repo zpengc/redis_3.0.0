@@ -280,14 +280,14 @@ void flushallCommand(redisClient *c) {
 void delCommand(redisClient *c) {
     int deleted = 0, j;
 
-    for (j = 1; j < c->argc; j++) {
+    for (j = 1; j < c->argc; j++) {  // 遍历所有键
         expireIfNeeded(c->db,c->argv[j]);
-        if (dbDelete(c->db,c->argv[j])) {
+        if (dbDelete(c->db,c->argv[j])) {  // 删除键成功
             signalModifiedKey(c->db,c->argv[j]);
-            notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,
-                "del",c->argv[j],c->db->id);
+            notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,  
+                "del",c->argv[j],c->db->id);  // 事件通知
             server.dirty++;
-            deleted++;
+            deleted++;  // 删除个数+1
         }
     }
     addReplyLongLong(c,deleted);
