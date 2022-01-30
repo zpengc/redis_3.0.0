@@ -155,11 +155,11 @@
 }
 
 typedef struct zlentry { // 压缩列表节点
-    unsigned int prevrawlensize, prevrawlen;  // 编码前驱节点长度所需字节数，前驱节点长度
-    unsigned int lensize, len;  // 编码节点值长度所需字节数，节点值长度
+    unsigned int prevrawlensize, prevrawlen;  // 编码【前驱节点长度】所需字节数，前驱节点长度
+    unsigned int lensize, len;  // 编码【节点值长度】所需字节数，节点值长度
     unsigned int headersize;  // prevrawlensize + lensize
     unsigned char encoding;  // 编码，表示数据类型和长度
-    unsigned char *p;
+    unsigned char *p;  // 指向底层数据结构
 } zlentry;
 
 /* Extract the encoding from the byte pointed by 'ptr' and set it into
@@ -405,23 +405,27 @@ static int64_t zipLoadInteger(unsigned char *p, unsigned char encoding) {
 
 /* Return a struct with all information about an entry. */
 static zlentry zipEntry(unsigned char *p) {
-    zlentry e;
+    zlentry e;  // 压缩列表节点
 
     ZIP_DECODE_PREVLEN(p, e.prevrawlensize, e.prevrawlen);
     ZIP_DECODE_LENGTH(p + e.prevrawlensize, e.encoding, e.lensize, e.len);
     e.headersize = e.prevrawlensize + e.lensize;
-    e.p = p;
+    e.p = p;  // 指向底层内容
     return e;
 }
 
 /* Create a new empty ziplist. */
-unsigned char *ziplistNew(void) {
-    unsigned int bytes = ZIPLIST_HEADER_SIZE+1;
+unsigned char *ziplistNew(void) {  
+    unsigned int bytes = ZIPLIST_HEADER_SIZE+1;  // 11个字节，包括末尾标记值
     unsigned char *zl = zmalloc(bytes);
-    ZIPLIST_BYTES(zl) = intrev32ifbe(bytes);
+    // 第0、1、2、3字节
+    ZIPLIST_BYTES(zl) = intrev32ifbe(bytes);  // 把大端存储转成小端存储，第一个字节和最后一个字节颠倒，第二个字节和倒数第二个字节颠倒，以此类推
+    // 第4、5、6、7字节
     ZIPLIST_TAIL_OFFSET(zl) = intrev32ifbe(ZIPLIST_HEADER_SIZE);
+    // 第8、9字节
     ZIPLIST_LENGTH(zl) = 0;
-    zl[bytes-1] = ZIP_END;
+    // 第10字节
+    zl[bytes-1] = ZIP_END;  // 255
     return zl;
 }
 

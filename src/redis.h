@@ -300,8 +300,8 @@ typedef long long mstime_t; /* millisecond time type. */
 #define REDIS_REPL_SYNCIO_TIMEOUT 5
 
 /* List related stuff */
-#define REDIS_HEAD 0
-#define REDIS_TAIL 1
+#define REDIS_HEAD 0  // lpush
+#define REDIS_TAIL 1  // rpush
 
 /* Sort operations */
 #define REDIS_SORT_GET 0
@@ -420,15 +420,16 @@ typedef long long mstime_t; /* millisecond time type. */
 /* The actual Redis Object */
 #define REDIS_LRU_BITS 24  // lru时钟
 #define REDIS_LRU_CLOCK_MAX ((1<<REDIS_LRU_BITS)-1) /* Max value of obj->lru */
+// 时钟解析度，1000毫秒增加一次，也就是一秒时钟+1
 #define REDIS_LRU_CLOCK_RESOLUTION 1000 /* LRU clock resolution in ms */
 // redis使用对象来表示键和值，此处的对象就是redisObject，所有的键都是sds，值是sds，集合，有序集合，哈希表和列表
 typedef struct redisObject {
     // 8字节元信息+8字节指针
-    unsigned type:4;  // 类型，bit field，占4位
+    unsigned type:4;  // 5种数据类型中的一种，bit field，占4位
     unsigned encoding:4;  // 编码，bit field，占4位，决定5种数据类型的底层数据结构
     // lru记录该对象最近一次被命令访问的时间，用来计算空转时间
     unsigned lru:REDIS_LRU_BITS; /* lru time (relative to server.lruclock) */
-    int refcount;  // 引用计数
+    int refcount;  // 引用计数，4字节
     void *ptr;  // 指向底层对象，字符串，集合，有序集合，哈希表，链表
 } robj;
 

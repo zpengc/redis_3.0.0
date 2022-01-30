@@ -258,25 +258,34 @@ void replicationFeedSlaves(list *slaves, int dictid, robj **argv, int argc) {
     }
 }
 
+/**
+ * @brief 将信息发送给各个监视器
+ * 
+ * @param c 客户端信息
+ * @param monitors 监视器列表
+ * @param dictid 数据库编号0-15
+ * @param argv 参数列表
+ * @param argc 参数个数
+ */
 void replicationFeedMonitors(redisClient *c, list *monitors, int dictid, robj **argv, int argc) {
     listNode *ln;
     listIter li;
     int j;
     sds cmdrepr = sdsnew("+");
     robj *cmdobj;
-    struct timeval tv;
+    struct timeval tv;  // 秒，毫秒
 
     gettimeofday(&tv,NULL);
     cmdrepr = sdscatprintf(cmdrepr,"%ld.%06ld ",(long)tv.tv_sec,(long)tv.tv_usec);
-    if (c->flags & REDIS_LUA_CLIENT) {
+    if (c->flags & REDIS_LUA_CLIENT) {  // lua伪客户端
         cmdrepr = sdscatprintf(cmdrepr,"[%d lua] ",dictid);
-    } else if (c->flags & REDIS_UNIX_SOCKET) {
+    } else if (c->flags & REDIS_UNIX_SOCKET) {  // unix套接字
         cmdrepr = sdscatprintf(cmdrepr,"[%d unix:%s] ",dictid,server.unixsocket);
     } else {
         cmdrepr = sdscatprintf(cmdrepr,"[%d %s] ",dictid,getClientPeerId(c));
     }
 
-    for (j = 0; j < argc; j++) {
+    for (j = 0; j < argc; j++) {  // 遍历参数
         if (argv[j]->encoding == REDIS_ENCODING_INT) {
             cmdrepr = sdscatprintf(cmdrepr, "\"%ld\"", (long)argv[j]->ptr);
         } else {
@@ -290,8 +299,8 @@ void replicationFeedMonitors(redisClient *c, list *monitors, int dictid, robj **
     cmdobj = createObject(REDIS_STRING,cmdrepr);
 
     listRewind(monitors,&li);
-    while((ln = listNext(&li))) {
-        redisClient *monitor = ln->value;
+    while((ln = listNext(&li))) {  // 遍历迭代器节点
+        redisClient *monitor = ln->value;  // 底层数据结构
         addReply(monitor,cmdobj);
     }
     decrRefCount(cmdobj);

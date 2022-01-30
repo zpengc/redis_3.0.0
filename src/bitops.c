@@ -209,7 +209,7 @@ long redisBitpos(void *s, unsigned long count, int bit) {
 #define BITOP_NOT   3
 
 /* SETBIT key offset bitvalue */
-void setbitCommand(redisClient *c) {
+void setbitCommand(redisClient *c) {  // setbit zpc 0 1，设置0偏移量为1
     robj *o;
     char *err = "bit is not an integer or out of range";
     size_t bitoffset;
@@ -217,9 +217,11 @@ void setbitCommand(redisClient *c) {
     int byteval, bitval;
     long on;
 
+    // 检查偏移量
     if (getBitOffsetFromArgument(c,c->argv[2],&bitoffset) != REDIS_OK)
         return;
 
+    // 1 or 0
     if (getLongFromObjectOrReply(c,c->argv[3],&on,err) != REDIS_OK)
         return;
 
@@ -230,11 +232,11 @@ void setbitCommand(redisClient *c) {
     }
 
     o = lookupKeyWrite(c->db,c->argv[1]);
-    if (o == NULL) {
-        o = createObject(REDIS_STRING,sdsempty());
-        dbAdd(c->db,c->argv[1],o);
-    } else {
-        if (checkType(c,o,REDIS_STRING)) return;
+    if (o == NULL) {  // bit对象不存在
+        o = createObject(REDIS_STRING,sdsempty());  // 默认底层空sds字符串
+        dbAdd(c->db,c->argv[1],o);  // 新键加入数据库
+    } else {  // bit对象存在
+        if (checkType(c,o,REDIS_STRING)) return;  // 检查数据类型
         o = dbUnshareStringValue(c->db,c->argv[1],o);
     }
 
@@ -258,23 +260,25 @@ void setbitCommand(redisClient *c) {
 }
 
 /* GETBIT key offset */
-void getbitCommand(redisClient *c) {
+void getbitCommand(redisClient *c) {  // getbit keyname offset 
     robj *o;
     char llbuf[32];
     size_t bitoffset;
     size_t byte, bit;
     size_t bitval = 0;
 
+    // 检查偏移量
     if (getBitOffsetFromArgument(c,c->argv[2],&bitoffset) != REDIS_OK)
         return;
 
+    // 检查键
     if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
         checkType(c,o,REDIS_STRING)) return;
 
-    byte = bitoffset >> 3;
-    bit = 7 - (bitoffset & 0x7);
+    byte = bitoffset >> 3;  // 检查在第几个字节，相当于除8后的小数，向下取整
+    bit = 7 - (bitoffset & 0x7);  // 检查offset在字节内的第几位，注意offset为7表示第0位，数组里面末尾的偏移量是最低位，0偏移量是最高位
     if (sdsEncodedObject(o)) {
-        if (byte < sdslen(o->ptr))
+        if (byte < sdslen(o->ptr))  // sds的len字段，二进制安全
             bitval = ((uint8_t*)o->ptr)[byte] & (1 << bit);
     } else {
         if (byte < (size_t)ll2string(llbuf,sizeof(llbuf),(long)o->ptr))

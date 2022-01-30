@@ -294,24 +294,24 @@ void listTypeConvert(robj *subject, int enc) {
 
 void pushGenericCommand(redisClient *c, int where) {
     int j, waiting = 0, pushed = 0;
-    robj *lobj = lookupKeyWrite(c->db,c->argv[1]);
+    robj *lobj = lookupKeyWrite(c->db,c->argv[1]);  // argv[1]是键对象，此处是列表名
 
-    if (lobj && lobj->type != REDIS_LIST) {
+    if (lobj && lobj->type != REDIS_LIST) {  // 操作的列表名存在，但是类型不是列表
         addReply(c,shared.wrongtypeerr);
         return;
     }
 
-    for (j = 2; j < c->argc; j++) {
-        c->argv[j] = tryObjectEncoding(c->argv[j]);
-        if (!lobj) {
-            lobj = createZiplistObject();
-            dbAdd(c->db,c->argv[1],lobj);
+    for (j = 2; j < c->argc; j++) {  // 遍历命令参数
+        c->argv[j] = tryObjectEncoding(c->argv[j]);  // 包装redisobject对象
+        if (!lobj) {  // 列表名不存在
+            lobj = createZiplistObject();  // 压缩列表
+            dbAdd(c->db,c->argv[1],lobj);  // 添加键值对
         }
         listTypePush(lobj,c->argv[j],where);
-        pushed++;
+        pushed++;  // 压入列表的元素个数
     }
     addReplyLongLong(c, waiting + (lobj ? listTypeLength(lobj) : 0));
-    if (pushed) {
+    if (pushed) {  // 通知
         char *event = (where == REDIS_HEAD) ? "lpush" : "rpush";
 
         signalModifiedKey(c->db,c->argv[1]);

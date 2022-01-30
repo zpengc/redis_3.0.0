@@ -88,11 +88,11 @@ slowlogEntry *slowlogCreateEntry(robj **argv, int argc, long long duration) {
  * function matches the one of the 'free' method of adlist.c.
  *
  * This function will take care to release all the retained object. */
-void slowlogFreeEntry(void *septr) {
+void slowlogFreeEntry(void *septr) {  // 释放慢日志节点内存
     slowlogEntry *se = septr;
     int j;
 
-    for (j = 0; j < se->argc; j++)
+    for (j = 0; j < se->argc; j++)  // 遍历参数，每个参数都是一个redisobject对象
         decrRefCount(se->argv[j]);
     zfree(se->argv);
     zfree(se);
@@ -101,9 +101,9 @@ void slowlogFreeEntry(void *septr) {
 /* Initialize the slow log. This function should be called a single time
  * at server startup. */
 void slowlogInit(void) {
-    server.slowlog = listCreate();
-    server.slowlog_entry_id = 0;
-    listSetFreeMethod(server.slowlog,slowlogFreeEntry);
+    server.slowlog = listCreate();  // 创建链表头节点
+    server.slowlog_entry_id = 0;  // 下个慢日志id为0
+    listSetFreeMethod(server.slowlog,slowlogFreeEntry);  // 设置链表节点free函数
 }
 
 /* Push a new entry into the slow log.
@@ -127,14 +127,14 @@ void slowlogReset(void) {
 
 /* The SLOWLOG command. Implements all the subcommands needed to handle the
  * Redis slow log. */
-void slowlogCommand(redisClient *c) {
-    if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"reset")) {
+void slowlogCommand(redisClient *c) {  // 执行慢日志命令，slowlog get/ reset/ hrlp/ len
+    if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"reset")) {  // slowlog reset
         slowlogReset();
         addReply(c,shared.ok);
-    } else if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"len")) {
-        addReplyLongLong(c,listLength(server.slowlog));
+    } else if (c->argc == 2 && !strcasecmp(c->argv[1]->ptr,"len")) {  // slowlog len
+        addReplyLongLong(c,listLength(server.slowlog));  // 直接获得链表len成员，O(1)时间复杂度
     } else if ((c->argc == 2 || c->argc == 3) &&
-               !strcasecmp(c->argv[1]->ptr,"get"))
+               !strcasecmp(c->argv[1]->ptr,"get")) // slowlog get [count]
     {
         long count = 10, sent = 0;
         listIter li;

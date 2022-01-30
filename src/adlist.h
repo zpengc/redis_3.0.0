@@ -36,7 +36,7 @@
 typedef struct listNode {  // 双端链表节点
     struct listNode *prev;
     struct listNode *next;
-    void *value;  // 保存的值
+    void *value;  // 保存的值，指向底部数据结构
 } listNode;
 
 typedef struct listIter {  // 迭代器结构，正向和反向遍历列表

@@ -36,10 +36,11 @@
 #define strtold(a,b) ((long double)strtod((a),(b)))
 #endif
 
-robj *createObject(int type, void *ptr) {
-    robj *o = zmalloc(sizeof(*o));
-    o->type = type;
-    o->encoding = REDIS_ENCODING_RAW;
+// 创建redisobject对象，包装底层数据结构
+robj *createObject(int type, void *ptr) {  // type是5种数据类型，ptr指向底层数据结构
+    robj *o = zmalloc(sizeof(*o));  // 分配robi结构体需要的字节空间，sizeof(*o)为16字节
+    o->type = type;  // 数据类型
+    o->encoding = REDIS_ENCODING_RAW;  // 默认类型，之后根据底层数据结构修改encoding
     o->ptr = ptr;
     o->refcount = 1;
 
@@ -188,8 +189,8 @@ robj *createListObject(void) {
     return o;
 }
 
-robj *createZiplistObject(void) {
-    unsigned char *zl = ziplistNew();
+robj *createZiplistObject(void) {  // 创建压缩列表对象
+    unsigned char *zl = ziplistNew();  // 底层数据结构
     robj *o = createObject(REDIS_LIST,zl);
     o->encoding = REDIS_ENCODING_ZIPLIST;
     return o;

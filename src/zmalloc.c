@@ -112,26 +112,27 @@ static size_t used_memory = 0;
 static int zmalloc_thread_safe = 0;
 pthread_mutex_t used_memory_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static void zmalloc_default_oom(size_t size) {
+static void zmalloc_default_oom(size_t size) {  // 内存分配失败，给出提示
     fprintf(stderr, "zmalloc: Out of memory trying to allocate %zu bytes\n",
         size);
     fflush(stderr);
     abort();
 }
 
+// 函数指针
 static void (*zmalloc_oom_handler)(size_t) = zmalloc_default_oom;
 
 void *zmalloc(size_t size) {
-    void *ptr = malloc(size+PREFIX_SIZE);
+    void *ptr = malloc(size+PREFIX_SIZE);  // 64位机器多分配8字节内存，32位机器多分配4字节内存
 
-    if (!ptr) zmalloc_oom_handler(size);
+    if (!ptr) zmalloc_oom_handler(size);  // 分配失败
 #ifdef HAVE_MALLOC_SIZE
     update_zmalloc_stat_alloc(zmalloc_size(ptr));
     return ptr;
 #else
-    *((size_t*)ptr) = size;
+    *((size_t*)ptr) = size;  // 多分配的内存存放【分配的内存字节大小】
     update_zmalloc_stat_alloc(size+PREFIX_SIZE);
-    return (char*)ptr+PREFIX_SIZE;
+    return (char*)ptr+PREFIX_SIZE;  // 指向实际的存储内容
 #endif
 }
 

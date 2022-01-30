@@ -242,7 +242,7 @@ struct redisCommand redisCommandTable[] = {  // 命令表
     {"flushall",flushallCommand,1,"w",0,NULL,0,0,0,0,0},
     {"sort",sortCommand,-2,"wm",0,sortGetKeys,1,1,1,0,0},
     {"info",infoCommand,-1,"rlt",0,NULL,0,0,0,0,0},
-    {"monitor",monitorCommand,1,"ars",0,NULL,0,0,0,0,0},
+    {"monitor",monitorCommand,1,"ars",0,NULL,0,0,0,0,0},  // 普通redis客户端变成监视器
     {"ttl",ttlCommand,2,"rF",0,NULL,1,1,1,0,0},
     {"pttl",pttlCommand,2,"rF",0,NULL,1,1,1,0,0},
     {"persist",persistCommand,2,"wF",0,NULL,1,1,1,0,0},
@@ -378,19 +378,19 @@ err:
 }
 
 /* Return the UNIX time in microseconds */
-long long ustime(void) {
-    struct timeval tv;
+long long ustime(void) {  // 微妙单位
+    struct timeval tv;  // 秒+微秒
     long long ust;
 
     gettimeofday(&tv, NULL);
-    ust = ((long long)tv.tv_sec)*1000000;
-    ust += tv.tv_usec;
-    return ust;
+    ust = ((long long)tv.tv_sec)*1000000;  // 秒转成微秒
+    ust += tv.tv_usec;  // 加上额外微秒
+    return ust;  // 总微秒
 }
 
 /* Return the UNIX time in milliseconds */
-long long mstime(void) {
-    return ustime()/1000;
+long long mstime(void) {  // 毫秒单位
+    return ustime()/1000;  // 微妙转成毫秒
 }
 
 /* After an RDB dump or AOF rewrite we exit from children using _exit() instead of
@@ -871,7 +871,7 @@ void activeExpireCycle(int type) {
     }
 }
 
-unsigned int getLRUClock(void) {
+unsigned int getLRUClock(void) {  // 计算最新的LRU时间
     return (mstime()/REDIS_LRU_CLOCK_RESOLUTION) & REDIS_LRU_CLOCK_MAX;
 }
 
@@ -3048,10 +3048,10 @@ void infoCommand(redisClient *c) {  // info + [section]
 
 void monitorCommand(redisClient *c) {
     /* ignore MONITOR if already slave or in monitor mode */
-    if (c->flags & REDIS_SLAVE) return;
 
-    c->flags |= (REDIS_SLAVE|REDIS_MONITOR);
-    listAddNodeTail(server.monitors,c);
+    if (c->flags & REDIS_SLAVE) return;  // 最低位是1
+    c->flags |= (REDIS_SLAVE|REDIS_MONITOR);  // 打开监视器标记位
+    listAddNodeTail(server.monitors,c);  // 加入到监视器链表
     addReply(c,shared.ok);
 }
 

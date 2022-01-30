@@ -497,9 +497,9 @@ void addReplyLongLongWithPrefix(redisClient *c, long long ll, char prefix) {
 
 void addReplyLongLong(redisClient *c, long long ll) {
     if (ll == 0)
-        addReply(c,shared.czero);
+        addReply(c,shared.czero);  // :0\r\n
     else if (ll == 1)
-        addReply(c,shared.cone);
+        addReply(c,shared.cone);  // :1\r\n
     else
         addReplyLongLongWithPrefix(c,ll,':');
 }

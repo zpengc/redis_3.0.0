@@ -109,18 +109,18 @@ list *listAddNodeTail(list *list, void *value)
     listNode *node;
 
     if ((node = zmalloc(sizeof(*node))) == NULL)
-        return NULL;
+        return NULL;  // 内存分配失败
     node->value = value;
-    if (list->len == 0) {
+    if (list->len == 0) {  // 空链表
         list->head = list->tail = node;
-        node->prev = node->next = NULL;
+        node->prev = node->next = NULL;  // 非循环链表
     } else {
-        node->prev = list->tail;
+        node->prev = list->tail;  // 添加到链表末尾
         node->next = NULL;
         list->tail->next = node;
         list->tail = node;
     }
-    list->len++;
+    list->len++;  // 链表长度+1
     return list;
 }
 
